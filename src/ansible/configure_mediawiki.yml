@@ -1,0 +1,96 @@
+---
+
+- hosts: localhost
+  gather_facts: false
+  name: playbook for MediaWiki deployment
+  tasks:
+
+    # Install Operating system packages required for MediaWiki
+    - name: Install operating system packages
+      yum:
+        name: "{{ prereq }}"
+        state: installed
+    
+    # Mysql secure Installation
+    - name: mysql secure installation
+      mysql_secure_installation:
+        login_password: ''
+        new_password: password22
+        user: root
+        login_host: localhost
+        hosts: ['localhost', '127.0.0.1', '::1']
+        change_root_password: true
+        remove_anonymous_user: true
+        disallow_root_login_remotely: true
+        remove_test_db: true 
+    
+    # Create User Wiki
+    - name: Create database user with password and all database privileges and 'WITH GRANT OPTION'
+      mysql_user:
+        name: {{ db_user }}
+        password: password
+        priv: '*.*:ALL,GRANT'
+        state: present
+    
+    # Create database wikidatabase
+    - name: Create a new database with name 'wikidata'
+      mysql_db:
+        name: {{ database_name }}
+        state: present
+    
+    # Restrat and Enable Services
+    - name: Restart and Enable services.
+      systemd:
+        name: 
+        - httpd
+        - mariadb
+        state: started
+        enabled: yes
+    
+    # Download Mediawiki
+    - name: Download MediaWiki
+      get_url:
+        url: https://releases.wikimedia.org/mediawiki/1.37/mediawiki-1.37.1.tar.gz
+        dest: /home/username/mediawiki.tgz   
+    
+    # Unarchive MediaWiki
+    - name: Unarchive MediaWiki
+      unarchive:
+        src: /home/username/mediawiki.tgz
+        dest: /var/www/
+        owner: {{ owner }}
+        group: {{ group }}
+    
+    # Crete symbolic link
+    - name: link mediawiki to versioned directory
+      file:
+        src: "/var/www/mediawiki-1.37.1"
+        dest: "/var/www/mediawiki"
+        state: link
+        mode: "0755"
+        owner: {{ owner }}
+        group: {{ group }}
+    
+    # Add firewall rules:
+    - name: permit traffic in public zone for http and https service
+      firewalld:
+        service: 
+        - http
+        - https
+        zone: public
+        permanent: yes
+        state: enabled    
+    
+    # Set Selinux to permissive mode
+    - name: Put SELinux in permissive mode.
+      selinux:
+        policy: targeted
+        state: permissive
+    
+    # Restart Firewall and httpd 
+    - name: Restart httpd and firewall services.
+      systemd:
+        name: 
+        - httpd
+        - firewalld
+        state: restart
