@@ -7,6 +7,9 @@ parameters:
   - name: yesNo
     type: boolean
     default: false
+    
+  - name: listofstrings
+    type: object
 
 trigger:
 - test
