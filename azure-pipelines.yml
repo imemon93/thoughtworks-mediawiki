@@ -8,8 +8,12 @@ parameters:
     type: boolean
     default: false
     
-  - name: listofstrings
-    type: object
+  - name: test
+    type: string
+    default: imran
+    values:
+      - imran
+      - farhan
 
 trigger:
 - test
