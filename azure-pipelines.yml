@@ -4,7 +4,9 @@
 # https://aka.ms/yaml
 
 parameters:
-  - name: ''
+  - name: yesNo
+    type: boolean
+    default: false
 
 trigger:
 - test
